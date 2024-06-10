@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, FlatList } from 'react-native';
-import { Item } from './Item'; // Import the named export Item
+import { Item } from './Item';
 
 const Task = () => {
   const [tasks, setTasks] = useState([]);
