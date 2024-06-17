@@ -1,19 +1,33 @@
-import React, { useState } from 'react';
+// Task.js
+import React, { useContext, useState } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, FlatList } from 'react-native';
 import { Item } from './Item';
+import { TaskContext, TaskProvider } from './TaskContext';
 
-const Task = () => {
-  const [tasks, setTasks] = useState([]);
+const TaskComponent = () => {
   const [task, setTask] = useState('');
   const [count, setCount] = useState(1);
+  const { tasks, setTasks } = useContext(TaskContext);
 
   const getCurrentDate = () => {
     const date = new Date();
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
-
     return `${hours}:${minutes}:${seconds}`;
+  };
+
+  const addTask = () => {
+    const currentDate = getCurrentDate();
+    const newTask = {
+      count,
+      task,
+      date: currentDate
+    };
+
+    setTasks([...tasks, newTask]);
+    setTask('');
+    setCount(count + 1);
   };
 
   return (
@@ -29,17 +43,7 @@ const Task = () => {
         <Button 
           title="Add Task" 
           color="white" 
-          onPress={() => {
-            const currentDate = getCurrentDate();
-            const newTask = {
-              count,
-              task,
-              date: currentDate
-            };
-            setTasks([...tasks, newTask]);
-            setTask('');
-            setCount(count + 1);
-          }}
+          onPress={addTask}
         />
       </View>
       <FlatList
@@ -49,7 +53,13 @@ const Task = () => {
       />
     </View>
   );
-}
+};
+
+const Task = () => (
+  <TaskProvider>
+    <TaskComponent />
+  </TaskProvider>
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -81,4 +91,5 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 });
-export {Task};
+
+export { Task };
