@@ -1,19 +1,23 @@
+// App.js
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { StyleSheet, Text, View, Button, Dimensions } from 'react-native';
+import { StyleSheet, View, Button } from 'react-native';
+import ClockProvider from './ClockContext';
+import Clock from './Clock';
 
 const Home = ({ navigation }) => {
-
   return (
-    <View style={styles.container}>
-      <View style={styles.clock}>
-        {/* Placeholder for future Clock*/}
+    <ClockProvider>
+      <View style={styles.container}>
+        <View style={styles.clock}>
+          <Clock />
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button title="Add A Task" color="white" onPress={() => navigation.navigate('Task')} />
+        </View>
+        <StatusBar style="auto" />
       </View>
-      <View style={styles.buttonContainer}>
-        <Button title="Add A Task" color="white" onPress={() => navigation.navigate('Task')} />
-      </View>
-      <StatusBar style="auto" />
-    </View>
+    </ClockProvider>
   );
 };
 
@@ -25,7 +29,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   clockContainer: {
-    alignItems: 'left',
+    alignItems: 'center',
     justifyContent: 'center',
   },
   clock: {
@@ -34,6 +38,8 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     borderColor: 'gray',
     borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonContainer: {
     borderRadius: 5,
@@ -48,5 +54,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export { Home };
-
+export {Home};
