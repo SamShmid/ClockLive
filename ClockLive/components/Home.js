@@ -1,23 +1,18 @@
-// App.js
-import { StatusBar } from 'expo-status-bar';
+// components/Home.js
 import React from 'react';
-import { StyleSheet, View, Button } from 'react-native';
-import ClockProvider from './ClockContext';
+import { View, Button, StyleSheet } from 'react-native';
 import Clock from './Clock';
 
 const Home = ({ navigation }) => {
   return (
-    <ClockProvider>
-      <View style={styles.container}>
-        <View style={styles.clock}>
-          <Clock />
-        </View>
-        <View style={styles.buttonContainer}>
-          <Button title="Add A Task" color="white" onPress={() => navigation.navigate('Task')} />
-        </View>
-        <StatusBar style="auto" />
+    <View style={styles.container}>
+      <View style={styles.clock}>
+        <Clock />
       </View>
-    </ClockProvider>
+      <View style={styles.buttonContainer}>
+        <Button title="Add A Task" color="white" onPress={() => navigation.navigate('Task')} />
+      </View>
+    </View>
   );
 };
 
@@ -25,10 +20,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  clockContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -46,12 +37,9 @@ const styles = StyleSheet.create({
     borderWidth: 5,
     borderColor: 'orange',
     backgroundColor: 'orange',
-    marginTop: 20,
+    marginTop: '40%',
     overflow: 'hidden',
-  },
-  text: {
-    color: 'black',
   },
 });
 
-export {Home};
+export default Home;
