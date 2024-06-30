@@ -6,9 +6,9 @@ import { StyleSheet, Text, View } from 'react-native';
 const About = () => {
   return (
     <View style={styles.container}>
-      <Text style={{...styles.text, fontWeight: 'bold', fontSize: 20}}>Clock Live</Text>
-      <Text style={styles.text}>
-        The app I am going to make, Clock Live, will combine a simple analog clock with all your tasks, from alarm clocks in the morning to calendar appointments to create a complete picture of your day.
+      <Text style={styles.title}>Clock Live</Text>
+      <Text style={styles.description}>
+        Clock Live combines a simple analog clock with all your tasks, from alarm clocks in the morning to calendar appointments, creating a complete picture of your day.
       </Text>
     </View>
   );
@@ -20,13 +20,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 20,
   },
-
-  text: {
+  title: {
+    color: 'orange',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  description: {
     color: 'white',
     fontSize: 16,
     textAlign: 'center',
-    width: '80%',
+    lineHeight: 24,
+    width: '90%',
   },
 });
 
