@@ -5,9 +5,10 @@ import { AppContext } from './Context';
 import MinuteHand from './MinuteHand';
 import HourHand from './HourHand';
 import TaskBlock from './TaskBlock';
+import { formatMinutes } from '../lib/time';
 
 const ClockComponent = () => {
-  const { tasks, setTasks, time } = useContext(AppContext);
+  const { tasks, completeTask, time } = useContext(AppContext);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
@@ -16,117 +17,50 @@ const ClockComponent = () => {
     console.log('Tasks:', tasks);
   }, [time, tasks]);
 
-  const calculateDuration = (task) => {
-    const startParts = task.startTime.split(':');
-    const endParts = task.endTime.split(':');
-
-    let startHour = parseInt(startParts[0]);
-    const startMinute = parseInt(startParts[1].slice(0, 2));
-    const startPeriod = startParts[1].slice(3).toLowerCase();
-
-    let endHour = parseInt(endParts[0]);
-    const endMinute = parseInt(endParts[1].slice(0, 2));
-    const endPeriod = endParts[1].slice(3).toLowerCase();
-
-    if (startPeriod === 'pm' && startHour !== 12) {
-      startHour += 12;
-    }
-    if (startPeriod === 'am' && startHour === 12) {
-      startHour = 0;
-    }
-    if (endPeriod === 'pm' && endHour !== 12) {
-      endHour += 12;
-    }
-    if (endPeriod === 'am' && endHour === 12) {
-      endHour = 0;
-    }
-
-    const start = startHour * 60 + startMinute;
-    const end = endHour * 60 + endMinute;
-
-    return end - start;
-  };
-
+  // Works on copies of the context tasks: layout fields (duration,
+  // startDegree, endDegree, overlapRing) are view state, not task state.
   const tasklistAdderChecker = (task, currentHour, list) => {
     if (task.isCompleted) return;
 
-    const startParts = task.startTime.split(':');
-    const endParts = task.endTime.split(':');
+    const startHour = Math.floor(task.startMinutes / 60);
+    const startMinute = task.startMinutes % 60;
+    const endHour = Math.floor(task.endMinutes / 60);
+    const endMinute = task.endMinutes % 60;
 
-    let startHour = parseInt(startParts[0]);
-    const startMinute = parseInt(startParts[1].slice(0, 2));
-    const startPeriod = startParts[1].slice(3).toLowerCase();
+    const entry = { ...task, duration: task.endMinutes - task.startMinutes };
 
-    let endHour = parseInt(endParts[0]);
-    const endMinute = parseInt(endParts[1].slice(0, 2));
-    const endPeriod = endParts[1].slice(3).toLowerCase();
-
-    if (startPeriod === 'pm' && startHour !== 12) {
-      startHour += 12;
-    }
-    if (startPeriod === 'am' && startHour === 12) {
-      startHour = 0;
-    }
-    if (endPeriod === 'pm' && endHour !== 12) {
-      endHour += 12;
-    }
-    if (endPeriod === 'am' && endHour === 12) {
-      endHour = 0;
-    }
-
-    task.duration = calculateDuration(task);
-
-    if (startHour === currentHour) {
-      list.push(task);
+    if (startHour === currentHour && endHour > currentHour) {
+      entry.duration = 60 - startMinute;
+      entry.endDegree = 360;
+      list.push(entry);
+    } else if (startHour === currentHour) {
+      list.push(entry);
     } else if (startHour < currentHour && endHour > currentHour) {
-      task.startDegree = 0;
-      task.endDegree = 360;
-      list.push(task);
+      entry.startDegree = 0;
+      entry.endDegree = 360;
+      list.push(entry);
     } else if (startHour < currentHour && endHour === currentHour) {
-      task.duration = endMinute;
-      task.startDegree = 0;
-      list.push(task);
-    } else if (startHour === currentHour && endHour > currentHour) {
-      task.duration = 60 - startMinute;
-      task.endDegree = 360;
-      list.push(task);
+      entry.duration = endMinute;
+      entry.startDegree = 0;
+      list.push(entry);
     }
   };
 
-  const assignOverlapRings = (tasks) => {
+  const assignOverlapRings = (allTasks) => {
     const currentHour = time.hour;
     const list = [];
 
-    tasks.forEach(task => tasklistAdderChecker(task, currentHour, list));
+    allTasks.forEach(task => tasklistAdderChecker(task, currentHour, list));
 
-    list.sort((a, b) => b.duration - a.duration || a.count - b.count);
+    list.sort((a, b) => b.duration - a.duration || (a.id < b.id ? -1 : 1));
 
     const overlapRing = Array.from({ length: 61 }, () => Array(list.length).fill(null));
 
     list.forEach(task => {
-      const startParts = task.startTime.split(':');
-      const endParts = task.endTime.split(':');
-
-      let startHour = parseInt(startParts[0]);
-      const startMinute = parseInt(startParts[1].slice(0, 2));
-      const startPeriod = startParts[1].slice(3).toLowerCase();
-
-      let endHour = parseInt(endParts[0]);
-      const endMinute = parseInt(endParts[1].slice(0, 2));
-      const endPeriod = endParts[1].slice(3).toLowerCase();
-
-      if (startPeriod === 'pm' && startHour !== 12) {
-        startHour += 12;
-      }
-      if (startPeriod === 'am' && startHour === 12) {
-        startHour = 0;
-      }
-      if (endPeriod === 'pm' && endHour !== 12) {
-        endHour += 12;
-      }
-      if (endPeriod === 'am' && endHour === 12) {
-        endHour = 0;
-      }
+      const startHour = Math.floor(task.startMinutes / 60);
+      const startMinute = task.startMinutes % 60;
+      const endHour = Math.floor(task.endMinutes / 60);
+      const endMinute = task.endMinutes % 60;
 
       const startDegree = task.startDegree ?? (startHour === currentHour ? startMinute * 6 : 0);
       const endDegree = task.endDegree ?? (endHour === currentHour ? endMinute * 6 : 360);
@@ -163,33 +97,13 @@ const ClockComponent = () => {
 
   const renderTaskBlocks = () => {
     const tasksWithRings = assignOverlapRings(tasks);
+    const currentHour = time.hour;
 
     return tasksWithRings.map((task) => {
-      const startParts = task.startTime.split(':');
-      const endParts = task.endTime.split(':');
-
-      let startHour = parseInt(startParts[0]);
-      const startMinute = parseInt(startParts[1].slice(0, 2));
-      const startPeriod = startParts[1].slice(3).toLowerCase();
-
-      let endHour = parseInt(endParts[0]);
-      const endMinute = parseInt(endParts[1].slice(0, 2));
-      const endPeriod = endParts[1].slice(3).toLowerCase();
-
-      if (startPeriod === 'pm' && startHour !== 12) {
-        startHour += 12;
-      }
-      if (startPeriod === 'am' && startHour === 12) {
-        startHour = 0;
-      }
-      if (endPeriod === 'pm' && endHour !== 12) {
-        endHour += 12;
-      }
-      if (endPeriod === 'am' && endHour === 12) {
-        endHour = 0;
-      }
-
-      const currentHour = time.hour;
+      const startHour = Math.floor(task.startMinutes / 60);
+      const startMinute = task.startMinutes % 60;
+      const endHour = Math.floor(task.endMinutes / 60);
+      const endMinute = task.endMinutes % 60;
 
       if (startHour === currentHour || endHour === currentHour || (startHour < currentHour && endHour > currentHour)) {
         const startDegree = task.startDegree ?? (startHour === currentHour ? startMinute * 6 : 0);
@@ -197,7 +111,7 @@ const ClockComponent = () => {
 
         return (
           <TaskBlock
-            key={task.count}
+            key={task.id}
             startDegree={startDegree}
             endDegree={endDegree}
             color={task.color || 'purple'}
@@ -215,11 +129,8 @@ const ClockComponent = () => {
     setModalVisible(true);
   };
 
-  const handleCompleteTask = () => {
-    const updatedTasks = tasks.map(task =>
-      task.count === selectedTask.count ? { ...task, isCompleted: true } : task
-    );
-    setTasks(updatedTasks);
+  const handleCompleteTask = async () => {
+    await completeTask(selectedTask.id);
     setModalVisible(false);
   };
 
@@ -230,7 +141,7 @@ const ClockComponent = () => {
       <View style={styles.borderCircle} />
       <HourHand hour={time.hour} minute={time.minute} />
       <MinuteHand minute={time.minute} />
-      
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -241,10 +152,10 @@ const ClockComponent = () => {
           <View style={[styles.modalView, selectedTask && { backgroundColor: selectedTask.color }]}>
             {selectedTask && (
               <>
-                <Text style={styles.modalText}>Task: {selectedTask.task}</Text>
+                <Text style={styles.modalText}>Task: {selectedTask.name}</Text>
                 <Text style={styles.modalText}>Description: {selectedTask.description}</Text>
-                <Text style={styles.modalText}>Start Time: {selectedTask.startTime}</Text>
-                <Text style={styles.modalText}>End Time: {selectedTask.endTime}</Text>
+                <Text style={styles.modalText}>Start Time: {formatMinutes(selectedTask.startMinutes)}</Text>
+                <Text style={styles.modalText}>End Time: {formatMinutes(selectedTask.endMinutes)}</Text>
               </>
             )}
             <TouchableOpacity style={styles.button} onPress={handleCompleteTask}>

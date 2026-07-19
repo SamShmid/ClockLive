@@ -11,15 +11,11 @@ Last updated: 2026-07-18
 
 ## Currently In Progress
 
-- Nothing — Phase 1 complete except the Android-emulator verification
-  (deferred until the Android toolchain is installed; see Blocked). Exact
-  next step: start Phase 2 (storage DI seam) — design the Task model +
-  `TaskRepository` interface in TypeScript, then implement the expo-sqlite
-  backend.
+- Nothing — Phase 2 complete and live-verified. Exact next step: Phase 3
+  (rendering/compute): extract `lib/clockLayout`, memoize, SVG arcs, shared
+  TaskDetailModal. `lib/time.ts` already exists from Phase 2.
 
 ## Up Next (in order)
-- [ ] Phase 2 — Storage architecture: DI `TaskRepository` seam over
-      `expo-sqlite` (core priority). Details below.
 - [ ] Phase 1 leftover — Android verification (blocked on toolchain install):
       `npx expo run:android` builds via CNG prebuild, app runs on emulator.
 - [ ] Phase 3 — Rendering & compute optimization. Details below.
@@ -49,6 +45,17 @@ Last updated: 2026-07-18
       `Context.js` (neither .then nor .catch logs fire). RN Button presses
       untriggerable by synthetic clicks (tooling limit) so add-task/complete
       flows were source-audited, not live-tested.
+- [x] Phase 2 — Storage DI seam — 2026-07-19 — lib/tasks (TS): TaskRepository
+      interface + SqliteTaskRepository (expo-sqlite, WAL) + AsyncStorage web
+      backend + platform factory + legacy migration; lib/time.ts; Context.tsx
+      owns repo & exposes operations; Task.js/Clock.js on minutes model
+      (4x duplicated string parsing gone; complete-task now persists — old
+      bug); react-native-storage + Storage.js deleted. A11y fix: Task form no
+      longer collapses into one AX element (accessible={false} on wrapper).
+      LIVE-VERIFIED on sim: task added via automation -> row in clocklive.db;
+      app relaunched 2m42s later -> task loaded (old code killed it at 60s);
+      clock hands verified correct through hour boundary. Web export OK,
+      tsc/eslint clean.
 - [x] Phase 1 — Expo SDK 51→57 + dep pruning — 2026-07-18/19 — removed 9
       unused deps + dead regenerator-runtime import; expo 57.0.7 / RN 0.86 /
       React 19.2.3; React Navigation v6→v7; @expo/vector-icons + expo-font
@@ -75,6 +82,8 @@ Last updated: 2026-07-18
   `PROJECT_REVIEW_2026-07-10.md`.
 - 2026-07-12: Phased rebuild plan created and saved to `TASKS.md`; decided
   architecture-first order (storage rewrite before piecemeal bug fixes).
+- 2026-07-19 (later): Phase 2 done and live-verified (persistence past the
+  old 60s bug window, correct clock, a11y form fix). Next: Phase 3.
 - 2026-07-19: Phase 1 done — Expo 57 / RN 0.86 / React 19, nav v7, 9 deps
   pruned, native folders deleted (CNG), doctor 20/20, iOS + web verified
   live. Discovered new-arch RN exposes buttons to accessibility, unblocking
@@ -129,24 +138,23 @@ Last updated: 2026-07-18
       Add A Task press) AND web (export verified). Android emulator verify
       DEFERRED — blocked on toolchain install (see Up Next leftover)
 
-### Phase 2 — Storage architecture (DI seam) ← *core priority*
+### Phase 2 — Storage architecture (DI seam) — DONE 2026-07-19
 
-- [ ] Design Task model: `{ id, name, description, startMinutes, endMinutes,
+- [x] Design Task model: `{ id, name, description, startMinutes, endMinutes,
       date?, color, isCompleted }` (numbers, not locale strings)
-- [ ] Define `TaskRepository` interface: `getTasks / addTask / completeTask /
+- [x] Define `TaskRepository` interface: `getTasks / addTask / completeTask /
       clearTasks` (+ subscribe/change notification)
-- [ ] Implement local backend (expo-sqlite per decision) — injected
+- [x] Implement local backend (expo-sqlite per decision; AsyncStorage backend for web via createTaskRepository.web.ts) — injected
       into the repository, never imported directly by components
-- [ ] Context provider owns a repository instance and exposes *operations*, not
+- [x] Context provider owns a repository instance and exposes *operations*, not
       a raw `setTasks` setter; every mutation persists automatically
-- [ ] Remove `react-native-storage`, the `storage.sync` monkey-patch, and the
+- [x] Remove `react-native-storage`, the `storage.sync` monkey-patch, and the
       1-minute expiry (data-loss bugs #1, #2, #7 die here by construction)
-- [ ] One-time migration for any previously saved task data
-- [ ] Verify the load path actually settles: QA 2026-07-18 found
-      `storage.load()` in `Context.js` never hits `.then` OR `.catch`
-      (see `QA_EXPLORATION_2026-07-18.md` §5/§8.2) — the rewrite must
-      guarantee load resolves and add a regression test for it
-- [ ] Design note: cloud/Google Calendar later = a second backend or a
+- [x] One-time migration for any previously saved task data (best-effort; legacy data was all expired by bug #1 anyway)
+- [x] Verify the load path actually settles — confirmed live: cold start
+      logs `Tasks: []` then the loaded list (regression test still owed in
+      Phase 4)
+- [x] Design note: cloud/Google Calendar later = a second backend or a
       sync-decorator in front of the local one; app code unchanged
 
 ### Phase 3 — Rendering & compute optimization

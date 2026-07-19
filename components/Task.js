@@ -1,5 +1,5 @@
 // components/Task.js
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   StyleSheet, Text, View, TextInput, Button, TouchableWithoutFeedback, Keyboard, ScrollView, Alert, TouchableOpacity, Modal
 } from 'react-native';
@@ -7,22 +7,12 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Item } from './Item';
 import { AppContext } from './Context';
 import ColorPicker from './ColorPicker';
-import storage from './Storage';
+import { formatMinutes, minutesOfDay } from '../lib/time';
 
 const defaultColor = '#6874e7';
 
-storage.sync = {
-  async tasks(params) {
-    try {
-      console.log('in storage.sync.tasks');
-    } catch (err) {
-      console.log('error in tasks.sync');
-    }
-  }
-}
-
 const TaskComponent = () => {
-  const [task, setTask] = useState('');
+  const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [startHour, setStartHour] = useState(new Date());
   const [endHour, setEndHour] = useState(new Date());
@@ -30,63 +20,19 @@ const TaskComponent = () => {
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const { tasks, setTasks } = useContext(AppContext);
+  const { tasks, addTask, completeTask, clearTasks } = useContext(AppContext);
 
-  useEffect(() => {
-    setColor(defaultColor); // Set default color to the first color in the color picker
-  }, []);
+  const handleAddTask = async () => {
+    const startMinutes = minutesOfDay(startHour);
+    const endMinutes = minutesOfDay(endHour);
 
-  const storeData = async (value) => {
-    try {
-      await storage.save({
-        key: 'tasks',
-        id: '1',
-        data: value,
-        expires: 1000 * 60,  // 1 minute
-      });
-      console.log('just stored ' + JSON.stringify(value));
-    } catch (e) {
-      console.log("error in storeData ");
-      console.dir(e);
-    }
-  }
-
-  const clearAll = async () => {
-    try {
-      console.log('in clearData');
-      await storage.clearMapForKey('tasks');
-      setTasks([]); // Clear the tasks in the context
-    } catch (e) {
-      console.log("error in clearAll ");
-      console.dir(e);
-    }
-  }
-
-  const getLastKey = () => {
-    if (tasks.length === 0) return 0;
-    return Math.max(...tasks.map(task => task.count));
-  }
-
-  const addTask = () => {
-    if (endHour < startHour) {
+    if (endMinutes < startMinutes) {
       Alert.alert("Invalid Time", "End time cannot be before start time.");
       return;
     }
 
-    const newTask = {
-      count: getLastKey() + 1,
-      task,
-      description,
-      startTime: startHour.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      endTime: endHour.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isCompleted: false,
-      color,
-    };
-
-    const updatedTasks = [...tasks, newTask];
-    setTasks(updatedTasks);
-    storeData(updatedTasks);
-    setTask('');
+    await addTask({ name, description, startMinutes, endMinutes, color });
+    setName('');
     setDescription('');
     setStartHour(new Date());
     setEndHour(new Date());
@@ -97,16 +43,15 @@ const TaskComponent = () => {
     setModalVisible(true);
   };
 
-  const handleCompleteTask = () => {
-    const updatedTasks = tasks.map(t =>
-      t.count === selectedTask.count ? { ...t, isCompleted: true } : t
-    );
-    setTasks(updatedTasks);
+  const handleCompleteTask = async () => {
+    await completeTask(selectedTask.id);
     setModalVisible(false);
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    // accessible={false}: without it this wrapper collapses the whole form
+    // into one opaque accessibility element (unusable with VoiceOver).
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <ScrollView contentContainerStyle={styles.scrollView}>
         <View style={styles.container}>
           <Text style={styles.title}>Task List</Text>
@@ -114,8 +59,8 @@ const TaskComponent = () => {
             style={styles.input}
             placeholder="Task Name"
             placeholderTextColor="white"
-            onChangeText={text => setTask(text)}
-            value={task}
+            onChangeText={text => setName(text)}
+            value={name}
           />
           <TextInput
             style={styles.input}
@@ -158,26 +103,26 @@ const TaskComponent = () => {
               <Button
                 title="Add Task"
                 color="white"
-                onPress={addTask}
+                onPress={handleAddTask}
               />
             </View>
             <View style={styles.buttonContainer}>
               <Button
                 title="Clear"
                 color="red"
-                onPress={clearAll}
+                onPress={clearTasks}
               />
             </View>
           </View>
           <View style={styles.taskListContainer}>
             {tasks.map((item) => (
               !item.isCompleted && (
-                <TouchableOpacity key={item.count} onPress={() => handleTaskPress(item)}>
+                <TouchableOpacity key={item.id} onPress={() => handleTaskPress(item)}>
                   <Item
-                    task={item.task}
+                    task={item.name}
                     description={item.description}
-                    startTime={item.startTime}
-                    endTime={item.endTime}
+                    startTime={formatMinutes(item.startMinutes)}
+                    endTime={formatMinutes(item.endMinutes)}
                     color={item.color}
                   />
                 </TouchableOpacity>
@@ -192,7 +137,7 @@ const TaskComponent = () => {
           onSelectColor={setColor}
           selectedColor={color}
         />
-        
+
         <Modal
           animationType="slide"
           transparent={true}
@@ -203,10 +148,10 @@ const TaskComponent = () => {
             <View style={[styles.modalView, selectedTask && { backgroundColor: selectedTask.color }]}>
               {selectedTask && (
                 <>
-                  <Text style={styles.modalText}>Task: {selectedTask.task}</Text>
+                  <Text style={styles.modalText}>Task: {selectedTask.name}</Text>
                   <Text style={styles.modalText}>Description: {selectedTask.description}</Text>
-                  <Text style={styles.modalText}>Start Time: {selectedTask.startTime}</Text>
-                  <Text style={styles.modalText}>End Time: {selectedTask.endTime}</Text>
+                  <Text style={styles.modalText}>Start Time: {formatMinutes(selectedTask.startMinutes)}</Text>
+                  <Text style={styles.modalText}>End Time: {formatMinutes(selectedTask.endMinutes)}</Text>
                 </>
               )}
               <TouchableOpacity style={styles.button} onPress={handleCompleteTask}>

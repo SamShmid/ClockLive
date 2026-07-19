@@ -25,25 +25,27 @@ finishes, or blocks; never batch updates to end of session.
   - `Task.js` — add/edit task UI
   - `Item.js` — task list row
   - `Home.js`, `About.js` — screens
-  - `Context.js` — `AppContext`: `{ tasks, setTasks, time }`; loads tasks on
-    mount, ticks `time` every minute
-  - `Storage.js` — react-native-storage over AsyncStorage (being replaced in
-    Phase 2 by a DI `TaskRepository` over expo-sqlite — do NOT patch storage
-    bugs piecemeal here; see PROJECT_TASKS.md)
+  - `Context.tsx` — `AppContext`: `{ tasks, addTask, completeTask, clearTasks,
+    time }`; owns a `TaskRepository` (injectable via prop), subscribes for
+    changes, ticks `time` every minute
   - `ColorPicker.js` — task color selection
+- `lib/` — TypeScript core:
+  - `lib/tasks/` — the storage seam: `TaskRepository` interface,
+    `SqliteTaskRepository` (native), `AsyncStorageTaskRepository` (web),
+    `createTaskRepository` factory (`.web.ts` picks the web backend),
+    `legacyMigration` (one-time react-native-storage import)
+  - `lib/time.ts` — minutes-of-day conversions and 12h formatting
 
-## Data model (current, pre-Phase-2)
+## Data model
 
-Tasks: array under storage key `tasks` id `1`. Fields include name,
-description, start/end times as locale strings, color, completion flag. The
-Phase 2 target model is
-`{ id, name, description, startMinutes, endMinutes, date?, color, isCompleted }`
-(numbers, not locale strings).
+`Task = { id, name, description, startMinutes, endMinutes, date?, color,
+isCompleted }` — times are minutes since midnight (numbers), stored in SQLite
+table `tasks` (`clocklive.db`) on native, AsyncStorage JSON on web. Components
+never import a storage backend directly — always go through the context
+operations / `TaskRepository`.
 
 ## Known issues / constraints
 
-- Storage layer has known data-loss bugs (see `PROJECT_REVIEW_2026-07-10.md`
-  §3); they are fixed by the Phase 2 rewrite, not piecemeal.
 - Local-only mode must always remain supported; cloud/Google Calendar sync is
   opt-in behind the repository interface (Phase 5).
 - Frontend/UI design is considered fine as-is — don't redesign it.
