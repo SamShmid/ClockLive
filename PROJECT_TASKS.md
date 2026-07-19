@@ -11,18 +11,15 @@ Last updated: 2026-07-18
 
 ## Currently In Progress
 
-- [ ] **iOS simulator QA exploration** — Sonnet subagent is driving the app on
-      the iOS Simulator (Expo Go SDK 51 route, fallback native build): every
-      screen/flow, screenshots to `qa/2026-07-18/`, report to
-      `QA_EXPLORATION_2026-07-18.md`. Exact next step if resuming cold: check
-      whether that report exists; if not, re-run the exploration per its spec
-      (see 2026-07-18 session log).
+- Nothing. Exact next step: start Phase 1 (Expo 51→57 upgrade) — and first
+  remind the owner to install the Android toolchain (see Blocked section).
 
 ## Up Next (in order)
 
-- [ ] Phase 1 — Expo SDK 51→57 upgrade + dependency pruning. Note from
-      Phase 0: app.json has a root-level "expo" object warning to clean up.
-      Details below.
+- [ ] Phase 1 — Expo SDK 51→57 upgrade + dependency pruning. ⏰ At start:
+      remind owner to install the Android toolchain (see Blocked section).
+      Note from Phase 0: app.json has a root-level "expo" object warning to
+      clean up. Details below.
 - [ ] Phase 2 — Storage architecture: DI `TaskRepository` seam over
       `expo-sqlite` (core priority). Details below.
 - [ ] Phase 3 — Rendering & compute optimization. Details below.
@@ -45,12 +42,21 @@ Last updated: 2026-07-18
       8 warnings deferred to Ph1/Ph3), .nvmrc (24), tsconfig.json (strict,
       expo base; file renames to .ts happen incrementally); lint/format/
       typecheck npm scripts; verified Metro boots from new root
+- [x] iOS simulator QA exploration (Sonnet subagent) — 2026-07-18 — Expo Go
+      SDK 51 on iPhone 17 sim; 13 screenshots in `qa/2026-07-18/`; report in
+      `QA_EXPLORATION_2026-07-18.md`. Confirmed 1-min expiry bug (source);
+      NEW finding: `storage.load()` promise appears to never settle in
+      `Context.js` (neither .then nor .catch logs fire). RN Button presses
+      untriggerable by synthetic clicks (tooling limit) so add-task/complete
+      flows were source-audited, not live-tested.
 
 ## Blocked / Open Questions
 
-- **Android QA exploration** — blocked: no Android SDK/adb/emulator installed
-  on this machine. Needs owner decision: install Android Studio/SDK (multi-GB)
-  now, or defer to Phase 1's Android verification step.
+- **Android QA exploration** — deferred by owner 2026-07-18. No Android
+  SDK/adb/emulator installed on this machine. ⏰ REMIND OWNER at Phase 1 start:
+  install Android toolchain (Android Studio or cmdline-tools + emulator +
+  system image) — required for Phase 1's Android verification step and the
+  Android QA walkthrough.
 
 ## Session Log
 
@@ -59,9 +65,12 @@ Last updated: 2026-07-18
 - 2026-07-12: Phased rebuild plan created and saved to `TASKS.md`; decided
   architecture-first order (storage rewrite before piecemeal bug fixes).
 - 2026-07-18: Resolved the three open decisions (TypeScript yes, expo-sqlite,
-  web in scope); migrated tracker to `PROJECT_TASKS.md`; completed all of
-  Phase 0 (flatten, CLAUDE.md, ESLint/Prettier, .nvmrc, tsconfig) and
-  verified Metro boots. Changes uncommitted — commit is the next step.
+  web in scope); migrated tracker to `PROJECT_TASKS.md`; completed and
+  committed all of Phase 0 (flatten, CLAUDE.md, ESLint/Prettier, .nvmrc,
+  tsconfig; f04c21a). Ran subagent iOS QA exploration → report + 13
+  screenshots; confirmed expiry bug, found new load-never-settles issue,
+  logged Phase 2 follow-up. Android QA deferred by owner (no SDK installed);
+  reminder wired to Phase 1 start.
 
 ---
 
@@ -116,6 +125,10 @@ Last updated: 2026-07-18
 - [ ] Remove `react-native-storage`, the `storage.sync` monkey-patch, and the
       1-minute expiry (data-loss bugs #1, #2, #7 die here by construction)
 - [ ] One-time migration for any previously saved task data
+- [ ] Verify the load path actually settles: QA 2026-07-18 found
+      `storage.load()` in `Context.js` never hits `.then` OR `.catch`
+      (see `QA_EXPLORATION_2026-07-18.md` §5/§8.2) — the rewrite must
+      guarantee load resolves and add a regression test for it
 - [ ] Design note: cloud/Google Calendar later = a second backend or a
       sync-decorator in front of the local one; app code unchanged
 
