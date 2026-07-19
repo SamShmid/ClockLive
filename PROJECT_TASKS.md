@@ -11,13 +11,15 @@ Last updated: 2026-07-18
 
 ## Currently In Progress
 
-- Nothing — Phase 0 complete (uncommitted). Exact next step: commit the
-  Phase 0 changes (flatten is staged as renames; new files untracked), then
-  start Phase 1 with `npx expo install expo@latest` + `npx expo install --fix`.
+- [ ] **iOS simulator QA exploration** — Sonnet subagent is driving the app on
+      the iOS Simulator (Expo Go SDK 51 route, fallback native build): every
+      screen/flow, screenshots to `qa/2026-07-18/`, report to
+      `QA_EXPLORATION_2026-07-18.md`. Exact next step if resuming cold: check
+      whether that report exists; if not, re-run the exploration per its spec
+      (see 2026-07-18 session log).
 
 ## Up Next (in order)
 
-- [ ] Commit Phase 0 (owner to confirm commit message / do the commit)
 - [ ] Phase 1 — Expo SDK 51→57 upgrade + dependency pruning. Note from
       Phase 0: app.json has a root-level "expo" object warning to clean up.
       Details below.
@@ -46,8 +48,9 @@ Last updated: 2026-07-18
 
 ## Blocked / Open Questions
 
-- None currently. All three phase-blocking decisions were resolved 2026-07-18
-  (see Resolved Decisions below).
+- **Android QA exploration** — blocked: no Android SDK/adb/emulator installed
+  on this machine. Needs owner decision: install Android Studio/SDK (multi-GB)
+  now, or defer to Phase 1's Android verification step.
 
 ## Session Log
 

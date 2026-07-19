@@ -33,3 +33,6 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# QA screenshots (large binaries, referenced from QA reports)
+qa/
