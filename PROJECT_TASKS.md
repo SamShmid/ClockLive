@@ -11,17 +11,17 @@ Last updated: 2026-07-18
 
 ## Currently In Progress
 
-- Nothing. Exact next step: start Phase 1 (Expo 51→57 upgrade) — and first
-  remind the owner to install the Android toolchain (see Blocked section).
+- Nothing — Phase 1 complete except the Android-emulator verification
+  (deferred until the Android toolchain is installed; see Blocked). Exact
+  next step: start Phase 2 (storage DI seam) — design the Task model +
+  `TaskRepository` interface in TypeScript, then implement the expo-sqlite
+  backend.
 
 ## Up Next (in order)
-
-- [ ] Phase 1 — Expo SDK 51→57 upgrade + dependency pruning. ⏰ At start:
-      remind owner to install the Android toolchain (see Blocked section).
-      Note from Phase 0: app.json has a root-level "expo" object warning to
-      clean up. Details below.
 - [ ] Phase 2 — Storage architecture: DI `TaskRepository` seam over
       `expo-sqlite` (core priority). Details below.
+- [ ] Phase 1 leftover — Android verification (blocked on toolchain install):
+      `npx expo run:android` builds via CNG prebuild, app runs on emulator.
 - [ ] Phase 3 — Rendering & compute optimization. Details below.
 - [ ] Phase 4 — Tests & CI. Details below.
 - [ ] Phase 5 — Google Calendar integration. Details below.
@@ -49,6 +49,17 @@ Last updated: 2026-07-18
       `Context.js` (neither .then nor .catch logs fire). RN Button presses
       untriggerable by synthetic clicks (tooling limit) so add-task/complete
       flows were source-audited, not live-tested.
+- [x] Phase 1 — Expo SDK 51→57 + dep pruning — 2026-07-18/19 — removed 9
+      unused deps + dead regenerator-runtime import; expo 57.0.7 / RN 0.86 /
+      React 19.2.3; React Navigation v6→v7; @expo/vector-icons + expo-font
+      explicit; deleted android/+ios/ (CNG; ids com.clocklive in app.json);
+      proper app.json (scheme, orientation default, web.bundler metro);
+      expo-doctor 20/20; npm audit 0 high/critical (11 moderate); tsc clean;
+      eslint 0 errors (react-hooks/refs + set-state-in-effect demoted to warn
+      until Ph2/3 rewrites); web export verified; live iOS verify on Expo Go
+      57 — clock + drawer + Task screen work. BONUS: new-arch RN exposes
+      buttons via accessibility → automated QA can now press Add A Task etc.
+      Android verify deferred (no toolchain).
 
 ## Blocked / Open Questions
 
@@ -64,6 +75,11 @@ Last updated: 2026-07-18
   `PROJECT_REVIEW_2026-07-10.md`.
 - 2026-07-12: Phased rebuild plan created and saved to `TASKS.md`; decided
   architecture-first order (storage rewrite before piecemeal bug fixes).
+- 2026-07-19: Phase 1 done — Expo 57 / RN 0.86 / React 19, nav v7, 9 deps
+  pruned, native folders deleted (CNG), doctor 20/20, iOS + web verified
+  live. Discovered new-arch RN exposes buttons to accessibility, unblocking
+  automated QA (the button-press limitation from the 2026-07-18 QA run is
+  gone). Android verify still pending toolchain install.
 - 2026-07-18: Resolved the three open decisions (TypeScript yes, expo-sqlite,
   web in scope); migrated tracker to `PROJECT_TASKS.md`; completed and
   committed all of Phase 0 (flatten, CLAUDE.md, ESLint/Prettier, .nvmrc,
@@ -98,19 +114,20 @@ Last updated: 2026-07-18
 - [x] TypeScript scaffolding (tsconfig; file renames happen incrementally in
       later phases)
 
-### Phase 1 — Expo upgrade & dependency pruning
+### Phase 1 — Expo upgrade & dependency pruning — DONE 2026-07-19 (Android verify pending)
 
-- [ ] Upgrade Expo SDK 51 → 57 (`npx expo install expo@latest` + `--fix`)
-- [ ] Delete `android/` + `ios/`, adopt prebuild/CNG (native folders are
+- [x] Upgrade Expo SDK 51 → 57 (`npx expo install expo@latest` + `--fix`)
+- [x] Delete `android/` + `ios/`, adopt prebuild/CNG (native folders are
       unmodified templates); move icons/splash config into app.json
-- [ ] Remove unused deps: react-native-color-picker, react-native-color-picker-ios,
+- [x] Remove unused deps: react-native-color-picker, react-native-color-picker-ios,
       react-native-wheel-color-picker, react-datetime-picker,
       @react-navigation/stack, @react-native-picker/picker,
       @react-native-community/slider, `install`, `npm`
-- [ ] Add explicit dep: @expo/vector-icons; drop regenerator-runtime import
-- [ ] Verify: `expo-doctor` clean; `npm audit` no high/critical; app builds and
-      runs on iOS simulator AND Android emulator (Android port target) AND
-      web (`npx expo start --web`) — web target confirmed in scope 2026-07-18
+- [x] Add explicit dep: @expo/vector-icons (+ expo-font peer); drop regenerator-runtime import
+- [x] Verify: `expo-doctor` clean (20/20); `npm audit` no high/critical; app
+      runs on iOS simulator (Expo Go 57, live-verified incl. navigation and
+      Add A Task press) AND web (export verified). Android emulator verify
+      DEFERRED — blocked on toolchain install (see Up Next leftover)
 
 ### Phase 2 — Storage architecture (DI seam) ← *core priority*
 

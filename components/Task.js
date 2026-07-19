@@ -7,7 +7,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Item } from './Item';
 import { AppContext } from './Context';
 import ColorPicker from './ColorPicker';
-import regeneratorRuntime from "regenerator-runtime";
 import storage from './Storage';
 
 const defaultColor = '#6874e7';

@@ -2,7 +2,22 @@
   "expo": {
     "name": "ClockLive",
     "slug": "ClockLive",
-    "version": "1.0.0"
-  },
-  "name": "ClockLive"
+    "version": "1.0.0",
+    "scheme": "clocklive",
+    "orientation": "default",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.clocklive",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.clocklive"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
 }
