@@ -8,5 +8,5 @@ module.exports = {
     'react-hooks/refs': 'warn',
     'react-hooks/set-state-in-effect': 'warn',
   },
-  ignorePatterns: ['node_modules/', 'android/', 'ios/'],
+  ignorePatterns: ['node_modules/', 'android/', 'ios/', 'dist/', 'server/'],
 };

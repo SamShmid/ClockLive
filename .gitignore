@@ -36,3 +36,7 @@ yarn-error.*
 
 # QA screenshots (large binaries, referenced from QA reports)
 qa/
+
+# Web build output + server database
+dist/
+server/data/

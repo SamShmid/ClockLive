@@ -9,7 +9,9 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "web:build": "expo export --platform web --output-dir dist",
+    "web:serve": "node server/index.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.6",

@@ -1,5 +1,5 @@
 # ClockLive Project Tasks
-Last updated: 2026-07-18
+Last updated: 2026-07-20
 
 > **This is the living plan — single source of truth for project state.**
 > Update the moment a task starts, finishes, or blocks (never batched to end of
@@ -11,13 +11,32 @@ Last updated: 2026-07-18
 
 ## Currently In Progress
 
-- Nothing — Phase 2 complete and live-verified. Exact next step: Phase 3
-  (rendering/compute): extract `lib/clockLayout`, memoize, SVG arcs, shared
-  TaskDetailModal. `lib/time.ts` already exists from Phase 2.
+- Nothing in flight. All background processes were stopped (Metro, test
+  server, cua-driver); the Android emulator `Medium_Phone` was left running.
+  Exact next step: fix ANDROID BUG #A1 below (stuck time-picker dialog) —
+  it makes the Task screen unusable on Android — then Phase 3.
 
 ## Up Next (in order)
-- [ ] Phase 1 leftover — Android verification (blocked on toolchain install):
-      `npx expo run:android` builds via CNG prebuild, app runs on emulator.
+
+- [ ] **ANDROID BUG #A1 (do first) — DateTimePicker dialog is stuck open.**
+      On Android, `@react-native-community/datetimepicker` with
+      `display="default"` IS a modal dialog, not an inline widget. `Task.js`
+      renders BOTH pickers unconditionally, so opening the Task screen pops a
+      time dialog that CANCEL / OK / hardware-back all fail to dismiss (two
+      dialogs are stacked). Task screen is effectively unusable on Android;
+      iOS is unaffected (renders inline there).
+      Fix: gate each picker behind state — a Button showing the current time
+      that sets `showStartPicker`/`showEndPicker`, render `<DateTimePicker>`
+      only when true, and hide it again in the change handler
+      (`Platform.OS === 'android'`). Verify on emulator + iOS sim.
+- [ ] **ANDROID BUG #A2 — `onChange` is deprecated** (Metro warns:
+      "DateTimePicker: `onChange` is deprecated. Use `onValueChange`,
+      `onDismiss`, and `onNeutralButtonPress` instead"). Migrate while doing
+      #A1 — same code.
+- [ ] Verify server-backed web repo end-to-end in a real browser
+      (`npm run web:build && npm run web:serve`, add a task in the UI, confirm
+      it lands in `server/data/clocklive.db` and survives a hard reload). The
+      API itself is already verified via curl; the browser round-trip is not.
 - [ ] Phase 3 — Rendering & compute optimization. Details below.
 - [ ] Phase 4 — Tests & CI. Details below.
 - [ ] Phase 5 — Google Calendar integration. Details below.
@@ -68,13 +87,38 @@ Last updated: 2026-07-18
       buttons via accessibility → automated QA can now press Add A Task etc.
       Android verify deferred (no toolchain).
 
+- [x] Android emulator verification — 2026-07-20 — owner installed the
+      Android SDK; AVD `Medium_Phone` booted, Expo Go 57 APK installed,
+      app opened via `exp://10.0.2.2:8081`. RESULT: app bundles and runs on
+      Android — clock renders with correct hands, drawer header, Task screen
+      renders, native Material time picker opens. FOUND Android bugs #A1/#A2
+      (see Up Next). Note: run Metro and use 10.0.2.2 (emulator alias for
+      host localhost); `adb` lives at ~/Library/Android/sdk/platform-tools.
+- [x] Clock tick robustness fix — 2026-07-20 — the "clock sometimes doesn't
+      move" report: a plain 60s `setInterval` drifts (fires up to 59s after
+      the real minute flip) and is paused/throttled while the app is
+      backgrounded, so the clock could sit visibly stale. `Context.tsx` now
+      schedules each tick to the actual next minute boundary and force-
+      refreshes on `AppState` -> 'active'.
+- [x] Web server-side SQLite backend — 2026-07-20 — owner asked for web data
+      to live on the server that hosts the site (not in the browser).
+      `server/index.mjs`: zero-dependency Node server (`node:sqlite`, built
+      into Node 22.5+) serving the Expo web export from `dist/` AND
+      `/api/tasks` (GET list, POST create, POST /:id/complete, DELETE clear)
+      over `server/data/clocklive.db`. `ApiTaskRepository` implements the
+      same `TaskRepository` interface and is now the web factory's choice,
+      degrading to browser AsyncStorage if the API is unreachable (so
+      `expo start --web` dev still works). Scripts: `npm run web:build`,
+      `npm run web:serve`. VERIFIED via curl: create/list/complete round-trip
+      persisted to the server DB; static site + JS bundle served (200).
+
 ## Blocked / Open Questions
 
-- **Android QA exploration** — deferred by owner 2026-07-18. No Android
-  SDK/adb/emulator installed on this machine. ⏰ REMIND OWNER at Phase 1 start:
-  install Android toolchain (Android Studio or cmdline-tools + emulator +
-  system image) — required for Phase 1's Android verification step and the
-  Android QA walkthrough.
+- RESOLVED 2026-07-20: Android toolchain installed by owner; emulator
+  verification done (see Done). No open blockers.
+- Open question for later: the server-backed web mode has no auth or
+  multi-user separation — every visitor shares one task list. Fine for a
+  personal deployment; needs a decision before any public hosting.
 
 ## Session Log
 
@@ -82,6 +126,11 @@ Last updated: 2026-07-18
   `PROJECT_REVIEW_2026-07-10.md`.
 - 2026-07-12: Phased rebuild plan created and saved to `TASKS.md`; decided
   architecture-first order (storage rewrite before piecemeal bug fixes).
+- 2026-07-20: Android emulator verified working (app runs; found stuck
+  time-picker bug #A1 + deprecated onChange #A2 — both queued as next work).
+  Fixed clock-tick drift/background staleness. Built the server-side SQLite
+  backend for web (server/index.mjs + ApiTaskRepository), curl-verified.
+  Session ended with a context clear; all state captured here.
 - 2026-07-19 (later): Phase 2 done and live-verified (persistence past the
   old 60s bug window, correct clock, a11y form fix). Next: Phase 3.
 - 2026-07-19: Phase 1 done — Expo 57 / RN 0.86 / React 19, nav v7, 9 deps
@@ -139,6 +188,7 @@ Last updated: 2026-07-18
       DEFERRED — blocked on toolchain install (see Up Next leftover)
 
 ### Phase 2 — Storage architecture (DI seam) — DONE 2026-07-19
+(extended 2026-07-20 with the server-backed web backend)
 
 - [x] Design Task model: `{ id, name, description, startMinutes, endMinutes,
       date?, color, isCompleted }` (numbers, not locale strings)
@@ -156,6 +206,9 @@ Last updated: 2026-07-18
       Phase 4)
 - [x] Design note: cloud/Google Calendar later = a second backend or a
       sync-decorator in front of the local one; app code unchanged
+- [x] Server-backed web backend (`ApiTaskRepository` + `server/index.mjs`) —
+      proof the seam works: adding a third backend touched zero component
+      code, only the web factory line
 
 ### Phase 3 — Rendering & compute optimization
 

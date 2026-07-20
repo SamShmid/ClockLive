@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { AppState } from 'react-native';
 import { createTaskRepository } from '../lib/tasks/createTaskRepository';
 import { migrateLegacyTasks } from '../lib/tasks/legacyMigration';
 import { TaskRepository } from '../lib/tasks/TaskRepository';
@@ -76,12 +77,29 @@ const ContextProvider = ({ children, repository }: ContextProviderProps) => {
     return { hour: now.getHours(), minute: now.getMinutes() };
   });
 
+  // Tick aligned to the real minute boundary (a plain 60s interval lags the
+  // wall clock by up to 59s), and refresh immediately on foreground — timers
+  // pause while backgrounded/throttled, which left the clock visibly stale.
   useEffect(() => {
-    const interval = setInterval(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    const tick = () => {
       const now = new Date();
       setTime({ hour: now.getHours(), minute: now.getMinutes() });
-    }, 60000);
-    return () => clearInterval(interval);
+      const msToNextMinute =
+        60000 - (now.getSeconds() * 1000 + now.getMilliseconds());
+      timeout = setTimeout(tick, msToNextMinute + 50);
+    };
+    tick();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        clearTimeout(timeout);
+        tick();
+      }
+    });
+    return () => {
+      clearTimeout(timeout);
+      subscription.remove();
+    };
   }, []);
 
   const value = useMemo(
