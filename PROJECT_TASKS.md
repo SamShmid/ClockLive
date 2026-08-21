@@ -73,6 +73,11 @@ Deploy checklist (every release):
 
 ## Done
 
+- [x] Agent orchestration framework installed + tracker brought to canonical
+      spec — 2026-08-21 — c7297bb — added `docs/AGENT_WORKFLOW.md`
+      (roles, PHASE_SPEC.md convention, gates, worktree isolation), wired from
+      `CLAUDE.md`; this file gained priority tags, deploy checklist, versioned
+      changelog, grouped/tagged Up Next, hashes on Done entries
 - [x] Full project review — 2026-07-10 — f04c21a — findings in
       `PROJECT_REVIEW_2026-07-10.md` (7 bugs, dep audit, architecture issues)
 - [x] Plan saved to task tracker — 2026-07-12 — f04c21a — phased plan
