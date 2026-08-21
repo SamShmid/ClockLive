@@ -7,10 +7,14 @@ an analog clock face. iOS + Android + web are all target platforms.
 it updated per its rules as you work** — update it the moment a task starts,
 finishes, or blocks; never batch updates to end of session.
 
+**For any multi-step build work, follow `docs/AGENT_WORKFLOW.md`** — the
+orchestrator/writers/integrator framework: phase contract in `PHASE_SPEC.md`,
+parallel writers in isolated worktrees, integrator-owned gates
+(typecheck → lint → web:build).
+
 ## Run commands
 
-- `npm start` — Expo dev server (currently `--dev-client`; native folders still
-  present until Phase 1 moves to prebuild/CNG)
+- `npm start` — Expo dev server (CNG/prebuild; no checked-in native folders)
 - `npm run ios` / `npm run android` — build & run natively
 - `npm run web` — web target (in scope; keep it working)
 
