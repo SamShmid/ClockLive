@@ -11,14 +11,14 @@ Role names are permanent; the model mapping below is the current tuning and
 may change (track cost per phase and adjust).
 
 - **Orchestrator** — the interactive session, on the owner's primary model
-  (currently Fable 5). Owns *design*, not typing: writes the phase contract
+  (currently Fable 5.1). Owns *design*, not typing: writes the phase contract
   (`PHASE_SPEC.md`), batches decisions to the owner, reviews the final
   integrated result. Writes little or no implementation code.
-- **Writers** — cheapest capable tier (currently **Haiku 4.5**; bump an
+- **Writers** — cheapest capable tier (currently **Haiku 5.5**; bump an
   individual work order to Sonnet if it's subtle). Run in parallel; each takes
   exactly ONE interface-level work order, implements only it in an isolated
   worktree/branch, touches only its assigned files.
-- **Integrator** — mid tier (currently **Sonnet 5**). Merges writer branches
+- **Integrator** — mid tier (currently **Sonnet 5.5**). Merges writer branches
   in dependency order, runs the gates, fixes only clear integration breaks,
   stops-and-asks on anything that smells like a design decision.
 
@@ -104,6 +104,6 @@ architecture.
 - **CI:** none yet — there is no `.github/`. Gates run locally until Phase 4
   adds a GitHub Actions workflow (lint + typecheck + tests on push/PR); once
   it exists, a green run on the pushed branch becomes the final gate.
-- **Model-tier mapping:** Orchestrator = Fable 5 (session model),
-  Writers = Haiku 4.5, Integrator = Sonnet 5. Default proposed 2026-08-21 —
+- **Model-tier mapping:** Orchestrator = Fable 5.1 (session model),
+  Writers = Haiku 5.5, Integrator = Sonnet 5.5. Default proposed 2026-08-21 —
   owner may retune; record changes here.
